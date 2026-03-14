@@ -1,7 +1,7 @@
 -- TOTAL FIX FOR BOOKS TABLE
 -- Run this in phpMyAdmin SQL tab
 
-USE book_catalog;
+
 
 -- 1. Remove the broken version
 DROP TABLE IF EXISTS books;
