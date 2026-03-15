@@ -4,7 +4,7 @@
             "id": 1,
             "title": "Harry Potter and the Philosopher's Stone",
             "author": "J.K. Rowling",
-            "stock": 2,
+            "stock": 3,
             "image": "img\/harrypotter.jpg",
             "genre": "Fantasy",
             "summary": "On his eleventh birthday, orphan Harry Potter discovers he is a wizard.",
@@ -105,14 +105,6 @@
             "id": 11
         }
     ],
-    "reservations": [
-        {
-            "id": 1,
-            "title": "Harry Potter and the Philosopher's Stone",
-            "days": "7",
-            "dueDate": "2026-03-20",
-            "qty": 1
-        }
-    ],
-    "reservedCount": 1
+    "reservations": [],
+    "reservedCount": 0
 }

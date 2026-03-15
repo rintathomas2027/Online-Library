@@ -1,29 +1,38 @@
 /**
- * login.js
- * Handles login, registration, and 3D UI interactions.
- * RECONSTRUCTED FOR STABILITY
+ * 🔑 THE GRAND ARCHIVE - AUTHENTICATION ENGINE (login.js)
+ * ==========================================================
+ * This script handles the "Front Door" of our archive. 
+ * It manages:
+ * 1. User Login validation and server-side verification.
+ * 2. New Scholar Registration (Signup) with modal animations.
+ * 3. 3D Tilt effects and password visibility toggles.
+ *
+ * This version uses jQuery for smooth DOM manipulation and 
+ * high-level event handling.
  */
 
 $(function() {
     "use strict";
 
-    // --- DOM ELEMENTS (jQuery Selectors) ---
+    // --- 1. DOM ELEMENTS (jQuery Selection) ---
     const $loginForm = $("#login-form");
     const $loginMessage = $("#login-message");
     const $loginBtn = $("#login-button");
     const $loginBtnLabel = $loginBtn.find(".btn-label");
     const $loginBtnSpinner = $loginBtn.find(".btn-spinner");
-
     const $openSignupBtn = $("#open-signup");
     const $signupOverlay = $("#signup-overlay");
     const $signupForm = $("#signup-form");
     const $closeSignupBtn = $("#close-signup");
     const $registerBtn = $("#register-button");
 
-    // --- UTILITIES ---
+    const API_PATH = "backend-api.php"; // Renamed from api.php
+
+    // --- 2. UI UTILITIES ---
+
     /**
      * Utility: showMessage
-     * Purpose: Displays a message to the user (error or success) on the login screen.
+     * Purpose: Displays success/error alerts within the login card.
      */
     const showMessage = ($container, text, isError = true) => {
         $container.text(text)
@@ -32,24 +41,18 @@ $(function() {
                   .toggleClass("success", !isError);
     };
 
-    /**
-     * Utility: clearMessage
-     * Purpose: Hides and clears any existing messages.
-     */
     const clearMessage = ($container) => {
         $container.text("").removeClass("is-visible error success");
     };
 
-    // --- SIGNUP MODAL ---
+    /**
+     * Role: Signup Modal Transitions
+     */
     $openSignupBtn.on("click", (e) => {
         e.preventDefault();
         $signupOverlay.addClass("is-visible").attr("aria-hidden", "false");
     });
 
-    /**
-     * Function: hideSignup
-     * Purpose: Closes the registration overlay with a smooth exit animation.
-     */
     const hideSignup = () => {
         $signupOverlay.addClass("is-leaving").removeClass("is-visible");
         setTimeout(() => {
@@ -60,65 +63,51 @@ $(function() {
 
     $closeSignupBtn.on("click", hideSignup);
 
-    // --- REGISTRATION LOGIC ---
-    /**
-     * Event Listener: Signup Form Submit
-     * Role: Handles new user registration using jQuery's AJAX-like fetch requests.
-     */
+    // --- 3. REGISTRATION LOGIC ---
     $signupForm.on("submit", async function(e) {
         e.preventDefault();
 
-        const idNo = $("#signup-id-no").val().trim();
-        const fullName = $("#signup-name").val().trim();
-        const email = $("#signup-email").val().trim();
-        const password = $("#signup-password").val().trim();
+        // 📝 Gather scholar details
+        const data = {
+            id_no: $("#signup-id-no").val().trim(),
+            full_name: $("#signup-name").val().trim(),
+            email: $("#signup-email").val().trim(),
+            password: $("#signup-password").val().trim()
+        };
 
-        // [JQUERY VALIDATION]
-        if (!idNo || !fullName || !email || !password) {
-            alert("All fields are required. (Validated via jQuery)");
+        if (!data.id_no || !data.full_name || !data.email || !data.password) {
+            alert("All archival fields are required for registration.");
             return;
         }
 
-        $registerBtn.prop("disabled", true).text("Processing...");
+        $registerBtn.prop("disabled", true).text("Verifying...");
 
         try {
-            const response = await fetch("api.php?action=register", {
+            const response = await fetch(`${API_PATH}?action=register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: $.param({ id_no: idNo, full_name: fullName, email: email, password: password })
+                body: $.param(data)
             });
 
-            const rawText = await response.text();
-            let result;
-            try {
-                result = JSON.parse(rawText);
-            } catch (e) {
-                console.error("Server returned non-JSON:", rawText);
-                throw new Error("Invalid server response.");
-            }
+            const result = await response.json();
 
             if (response.ok) {
-                $registerBtn.text("Success!").css("background-color", "#4cd137");
+                $registerBtn.text("Scholar Registered!").css("background", "var(--success)");
                 setTimeout(() => {
                     hideSignup();
-                    $registerBtn.prop("disabled", false).text("Register").css("background-color", "");
-                }, 1000);
+                    $registerBtn.prop("disabled", false).text("Register Volume").css("background", "");
+                }, 1200);
             } else {
-                alert(result.error || "Registration failed.");
+                alert(result.error || "The Archive rejected this registration.");
                 $registerBtn.prop("disabled", false).text("Register");
             }
         } catch (err) {
-            console.error("Registration error:", err);
-            alert("Connection error: " + err.message);
-            $registerBtn.prop("disabled", false).text("Register");
+            console.error("Connection Failed:", err);
+            $registerBtn.prop("disabled", false).text("Retry Registration");
         }
     });
 
-    // --- LOGIN LOGIC ---
-    /**
-     * Event Listener: Login Form Submit
-     * Role: Handles user authentication and redirects to the appropriate dashboard.
-     */
+    // --- 4. LOGIN LOGIC ---
     $loginForm.on("submit", async function(e) {
         e.preventDefault();
         clearMessage($loginMessage);
@@ -126,79 +115,73 @@ $(function() {
         const idNo = $("#login-id-no").val().trim();
         const password = $("#password").val().trim();
 
-        // [JQUERY VALIDATION]
         if (!idNo) {
-            showMessage($loginMessage, "Please enter your ID no. (Required field)");
+            showMessage($loginMessage, "Identification Required: Please enter your ID No.");
             return;
         }
-        // Note: Password check is removed here to allow 'Admin' role bypass 
-        // as supported by the backend (api.php). Standard users will still 
-        // be challenged by the server.
 
-        // Spinner toggle via jQuery
+        // 🔄 Show the loading spinner
         $loginBtnLabel.hide();
         $loginBtnSpinner.prop("hidden", false);
         $loginBtn.prop("disabled", true);
 
         try {
-            const response = await fetch("api.php?action=login", {
+            const response = await fetch(`${API_PATH}?action=login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: $.param({ id_no: idNo, password: password })
             });
 
-            const rawText = await response.text();
-            let result;
-            try {
-                result = JSON.parse(rawText);
-            } catch (e) {
-                console.error("Server returned non-JSON:", rawText);
-                throw new Error("Invalid server response.");
-            }
+            const result = await response.json();
 
             if (response.ok) {
-                showMessage($loginMessage, "Access Granted. Redirecting...", false);
+                showMessage($loginMessage, "Identity Verified. Accessing the Vault...", false);
+                
+                // 💾 Store session tokens locally
                 localStorage.setItem("isLoggedIn", "true");
                 localStorage.setItem("userIdNo", result.user.id_no);
                 localStorage.setItem("userName", result.user.full_name);
                 localStorage.setItem("userRole", result.user.role || 'user');
 
+                // 🚀 Immediate redirect based on status
                 setTimeout(() => {
-                    window.location.href = result.user.role === 'admin' ? "admin.html" : "index.html";
+                    window.location.href = result.user.role === 'admin' ? "admin.php" : "library.php";
                 }, 1000);
             } else {
-                showMessage($loginMessage, result.error || "Authentication failed.");
+                showMessage($loginMessage, result.error || "Forbidden: Identification provided is invalid.");
                 $loginBtnLabel.show();
                 $loginBtnSpinner.prop("hidden", true);
                 $loginBtn.prop("disabled", false);
             }
         } catch (err) {
-            console.error("Login error:", err);
-            showMessage($loginMessage, "Server Connection Failed.");
+            showMessage($loginMessage, "The Archive is currently unreachable. Check connection.");
             $loginBtnLabel.show();
             $loginBtnSpinner.prop("hidden", true);
             $loginBtn.prop("disabled", false);
         }
     });
 
-    // --- UI POLISH: 3D CARD TILT ---
+    // --- 5. VISUAL EFFECTS ---
+
+    /**
+     * 3D Tilt: Makes the login card lean towards the mouse pointer.
+     */
     const $loginCard = $(".login-card");
     if ($loginCard.length) {
         $(document).on("mousemove", (e) => {
-            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
-            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 30;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 30;
             $loginCard.css("transform", `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`);
         });
     }
 
-    // --- [JQUERY INTERACTION] PASSWORD TOGGLE ---
+    /**
+     * Password Visibility Toggle
+     */
     $(".toggle-password").on("click", function() {
-        const $btn = $(this);
-        const $input = $btn.siblings("input");
-        const isPassword = $input.attr("type") === "password";
-        
-        $input.attr("type", isPassword ? "text" : "password");
-        $btn.text(isPassword ? "🔒" : "👁"); // Change icon
-        $btn.attr("aria-pressed", isPassword ? "true" : "false");
+        const $input = $(this).siblings("input");
+        const type = $input.attr("type") === "password" ? "text" : "password";
+        $input.attr("type", type);
+        $(this).text(type === "password" ? "🔒" : "👁");
     });
 });
