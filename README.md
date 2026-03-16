@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * login.js
  * Handles login, registration, and 3D UI interactions.
@@ -202,3 +203,7 @@ $(function() {
         $btn.attr("aria-pressed", isPassword ? "true" : "false");
     });
 });
+=======
+# Online-Library-Book-Reservation-Site
+A smart virtual space where readers can reserve books effortlessly, free from real-time hurdles, with updates flowing continuously.
+>>>>>>> 92b32e0 (Initial commit)
